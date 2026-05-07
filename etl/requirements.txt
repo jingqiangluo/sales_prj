@@ -1,0 +1,9 @@
+# requirements.txt
+#dbt-core==1.8.0
+#dbt-postgres==1.8.0
+pandas
+numpy
+psycopg2-binary
+sqlalchemy
+pytest
+# add any other packages you need

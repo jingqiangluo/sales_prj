@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: stg_sales
+    description: "Staging layer - cleaned sales transactions"
+    columns:
+      - name: transaction_id
+        tests:
+          - not_null
+        #  - unique
+      - name: sale_date
+        tests: [not_null]
+      - name: store_id
+        tests: [not_null]
+      - name: quantity
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: price
+        tests: [not_null]
+      - name: total_amount
+        tests: [not_null]
+
+  - name: int_region_store_sales_monthly
+    description: "Monthly sales by store and region"
+    columns:
+      - name: sale_year_month
+        tests: [not_null]
+      - name: num_transactions
+        tests: [not_null]
+      - name: total_revenue
+        tests: [not_null]
+
+  - name: mart_sales_monthly
+    description: "Final monthly aggregated sales KPIs"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [sale_year_month]
+    columns:
+      - name: sale_year_month
+        tests: [not_null]
+      - name: monthly_revenue
+        tests: [not_null]
+      - name: monthly_transactions
+        tests: [not_null]
+      - name: avg_price
+        tests: 
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0

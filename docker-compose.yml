@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sales_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dbt_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  etl:
+    build: ./etl
+    container_name: etl
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./etl:/app                    # ← Mount etl codes (fast changes)
+      - ./data:/home/workdir/data          # Mount a data folder, put raw data files here
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: sales_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+
+  dbt:
+    build: ./dbt
+    container_name: dbt
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./:/dbt          # Mount your local project root to /dbt in container
+      - ~/.dbt:/root/.dbt  # Mount your local profiles
+      - ./dbt:/usr/app:rw
+    environment:
+      - DBT_PROJECT_DIR=/usr/app
+      - DBT_PROFILES_DIR=/usr/app
+    stdin_open: true
+    tty: true
+    command: tail -f /dev/null
+
+volumes:
+  postgres_data:
