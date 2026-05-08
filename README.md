@@ -8,6 +8,46 @@ This pipeline ingests a dirty CSV file (`example_sales_data.csv`) containing inc
 
 **Goal**: Demonstrate core data engineering skills including ETL, data modeling, testing, and containerization.
 
+## Approach and Architecture
+
+This project implements a complete end-to-end data pipeline that takes messy, real-world sales data from a CSV file and turns it into clean, reliable analytical models.
+
+### Overall Design Philosophy
+
+The pipeline follows the **Medallion Architecture** (Bronze → Silver → Gold). This layered approach ensures that raw data is gradually cleaned, enriched, and transformed into high-quality, consumption-ready datasets.
+
+### Architecture Flow
+
+1. **Source Layer**  
+   The raw `example_sales_data.csv` file, which contains many data quality issues such as inconsistent date formats, messy store names, missing values, and irregular formatting.
+
+2. **Raw Layer**  
+   Python ETL script reads the CSV, performs initial validation, and loads the data into the `raw.sales_raw` table in PostgreSQL. This layer preserves the original data as a single source of truth.
+
+3. **Staging Layer** (Silver)  
+   Using dbt, the data is cleaned and standardized. This includes parsing multiple date formats, normalizing store IDs and regions, handling nulls, calculating `total_amount`, and adding derived columns.
+
+4. **Intermediate Layer**  
+   Aggregates the cleaned data into daily metrics by store and region. This layer applies business logic such as counting transactions, calculating discount rates, and identifying top payment methods.
+
+5. **Mart Layer** (Gold)  
+   Produces the final analytical model (`mart_sales_daily`) containing ready-to-use KPIs like daily revenue, transaction count, and average order value. Optimized for reporting and analysis.
+
+### Key Design Decisions
+
+- **Separation of Responsibilities**: Python handles extraction and heavy data cleaning (strong at handling messy CSV), while dbt manages modeling, testing, and documentation.
+- **Incremental Loading**: Implemented in the staging model for efficiency on subsequent runs.
+- **Data Quality First**: Cleaning happens early in the staging layer, with validation at every step.
+- **Reproducibility**: Everything runs in Docker containers using Docker Compose.
+- **Maintainability**: Clear separation of layers and use of dbt best practices.
+
+### Technology Choices
+
+Python + pandas was chosen for the ETL step due to its excellent capabilities for data cleaning. dbt was selected for transformations because it provides version control, testing, documentation, and incremental processing. PostgreSQL serves as a lightweight but realistic local substitute for cloud data warehouses like Snowflake.
+
+This architecture is production-oriented, scalable, and follows modern data engineering best practices while remaining simple enough to run locally.
+
+
 ## Architecture
 ``` mermaid
 graph TD
